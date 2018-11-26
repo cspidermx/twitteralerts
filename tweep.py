@@ -67,7 +67,7 @@ def dostuff():
     while True:
         try:
             cur = conn.cursor()
-            cur.execute('SELECT * FROM rules')
+            cur.execute('SELECT id_user, handle, lookfor, discrobot FROM rules')
             rules = cur.fetchall()
             if len(rules) > 0:
                 api = TwitterAPI(consumer_key,
