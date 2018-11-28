@@ -104,6 +104,7 @@ vars.py
 .idea/
 dbdesignquery.txt
 dbstructure.jpg
+dbstructure.psd
 env.bat
 Herald_postgres_create.sql
 notes.txt
