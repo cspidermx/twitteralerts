@@ -16,7 +16,7 @@ DATABASE_URL = os.environ['DATABASE_URL']
 def stop_daemon():
     conn = connectdb()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM service')
+    cur.execute('SELECT stopped, in_use FROM service')
     sts = cur.fetchall()
     if len(sts) > 0:
         estado = sts[0][0]
