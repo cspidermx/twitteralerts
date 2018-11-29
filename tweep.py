@@ -67,7 +67,7 @@ def dostuff():
     while True:
         try:
             cur = conn.cursor()
-            cur.execute('SELECT id_user, handle, lookfor, discrobot FROM rules')
+            cur.execute('SELECT id_user, handle, lookfor, discrobot, id FROM rules')
             rules = cur.fetchall()
             if len(rules) > 0:
                 api = TwitterAPI(consumer_key,
@@ -78,8 +78,8 @@ def dostuff():
 
             i = 0
             for r in rules:
-                idusr = r[0]
-                cur.execute('SELECT * FROM since WHERE id_user={}'.format(idusr))
+                rlid = r[4]
+                cur.execute('SELECT * FROM since WHERE rule_id={}'.format(rlid))
                 snce = cur.fetchall()
                 if len(snce) == 0:
                     rules[i] += ('0',)
@@ -96,7 +96,7 @@ def dostuff():
         idusr = r[0]
         scnm = r[1]
         term = r[2]
-        since = r[4]
+        since = r[5]
         if since == '0':
             snc = '0'
             orgsnc = ''
@@ -152,12 +152,12 @@ def dostuff():
         if snc != '0':
             while True:
                 try:
-                    if r[4] == '0':
-                        cur.execute("INSERT INTO since VALUES({},'{}')".format(idusr, snc))
+                    if r[5] == '0':
+                        cur.execute("INSERT INTO since VALUES({},'{}')".format(r[4], snc))
                         conn.commit()
                     else:
                         if snc != orgsnc:
-                            cur.execute("UPDATE since set idsince='{}' WHERE id_user={}".format(snc, idusr))
+                            cur.execute("UPDATE since set idsince='{}' WHERE rule_id={}".format(snc, r[4]))
                             conn.commit()
                     break
                 except psycopg2.OperationalError:
