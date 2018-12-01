@@ -3,8 +3,11 @@ chardet==3.0.4
 cloudconvert==1.0.0
 idna==2.7
 oauthlib==2.1.0
+psycopg2==2.7.6
 psycopg2-binary==2.7.6.1
+python-dateutil==2.7.5
 requests==2.20.1
 requests-oauthlib==1.0.0
+six==1.11.0
 TwitterAPI==2.5.4
 urllib3==1.24.1
