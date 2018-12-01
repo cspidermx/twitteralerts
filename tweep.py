@@ -5,12 +5,50 @@ import time
 from discord import discpost
 import os
 import datetime
+import string
+import random
+from dateutil.tz import gettz
+
 
 consumer_key = os.environ['consumer_key']
 consumer_secret = os.environ['consumer_secret']
 access_token = os.environ['access_token']
 access_token_secret = os.environ['access_token_secret']
 DATABASE_URL = os.environ['DATABASE_URL']
+
+
+def id_generator(size=6):
+    chars = string.ascii_uppercase + string.digits + string.ascii_lowercase
+    return ''.join(random.choice(chars) for _ in range(size))
+
+
+def encode_eventime(timestmp):
+    def twodigit(txt):
+        if len(txt) < 2:
+            txt = '0' + txt
+        return txt
+    y = str(timestmp.year)
+    m = twodigit(str(timestmp.month))
+    d = twodigit(str(timestmp.day))
+    hh = twodigit(str(timestmp.hour))
+    mm = twodigit(str(timestmp.minute))
+    return y + m + d + '|' + hh + mm
+
+
+def saveusage(cnctn, rlid):
+    id_usage = id_generator(10)
+    conn = cnctn
+    tzinfos = gettz("America/Mexico_City")
+    stmp = encode_eventime(datetime.datetime.now(tz=tzinfos))
+    while True:
+        try:
+            cur = conn.cursor()
+            cur.execute("INSERT INTO usedata VALUES({},{},{})".format(id_usage, rlid, stmp))
+            conn.commit()
+            break
+        except psycopg2.OperationalError:
+            print('Se perdió la conexión con la base')
+            conn = connectdb()
 
 
 def stop_daemon():
@@ -93,10 +131,13 @@ def dostuff():
     lock(conn, False)
 
     for r in rules:
-        idusr = r[0]
-        scnm = r[1]
-        term = r[2]
-        since = r[5]
+        # idusr = r[0]
+        # r[0] contains the id_user
+        scnm = r[1]  # r[1] contains the twitter handle to search
+        term = r[2]  # r[2] contains the list of terms to search for
+        # r[3] contains the discord webhook URL
+        # r[4] contains the rule_id
+        since = r[5]  # r[5] contains the id of the last tweet looked at for this rule
         if since == '0':
             snc = '0'
             orgsnc = ''
@@ -148,7 +189,8 @@ def dostuff():
                 print('Text: ', post['full_text'])
                 print('--------------------------------------------')
                 if orgsnc != '':
-                    discpost(post, r[3])  # r[3] contains the discord webhook URL
+                    discpost(post, r[3])
+                    saveusage(conn, r[4])
         if snc != '0':
             while True:
                 try:
