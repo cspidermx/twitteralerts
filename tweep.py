@@ -35,7 +35,7 @@ def encode_eventime(timestmp):
     return y + m + d + '|' + hh + mm
 
 
-def saveusage(cnctn, rlid):
+def saveusage(cnctn, rlid, fulltext):
     id_usage = id_generator(10)
     conn = cnctn
     tzinfos = gettz("America/Mexico_City")
@@ -43,7 +43,11 @@ def saveusage(cnctn, rlid):
     while True:
         try:
             cur = conn.cursor()
-            cur.execute("INSERT INTO usedata VALUES({},{},{})".format(id_usage, rlid, stmp))
+            cur.execute(
+                "prepare insertdata as "
+                "INSERT INTO usedata VALUES($1,$2,$3,$4)")
+            cur.execute("execute insertdata (%s,%s,%s,%s)", (id_usage, rlid, stmp, fulltext))
+            # cur.execute("INSERT INTO usedata VALUES('{}',{},'{}','{}')".format(id_usage, rlid, stmp, fulltext))
             conn.commit()
             break
         except psycopg2.OperationalError:
@@ -190,7 +194,7 @@ def dostuff():
                 print('--------------------------------------------')
                 if orgsnc != '':
                     discpost(post, r[3])
-                    saveusage(conn, r[4])
+                    saveusage(conn, r[4], post['full_text'])
         if snc != '0':
             while True:
                 try:
