@@ -49,6 +49,8 @@ def saveusage(cnctn, rlid, fulltext):
             cur.execute("execute insertdata (%s,%s,%s,%s)", (id_usage, rlid, stmp, fulltext))
             # cur.execute("INSERT INTO usedata VALUES('{}',{},'{}','{}')".format(id_usage, rlid, stmp, fulltext))
             conn.commit()
+            cur.execute('DEALLOCATE insertdata')
+            conn.commit()
             break
         except psycopg2.OperationalError:
             print('Se perdió la conexión con la base')
@@ -109,7 +111,7 @@ def dostuff():
     while True:
         try:
             cur = conn.cursor()
-            cur.execute('SELECT id_user, handle, lookfor, discrobot, id FROM rules')
+            cur.execute('SELECT id_user, handle, lookfor, discrobot, id, media FROM rules')
             rules = cur.fetchall()
             if len(rules) > 0:
                 api = TwitterAPI(consumer_key,
@@ -141,7 +143,8 @@ def dostuff():
         term = r[2]  # r[2] contains the list of terms to search for
         # r[3] contains the discord webhook URL
         # r[4] contains the rule_id
-        since = r[5]  # r[5] contains the id of the last tweet looked at for this rule
+        # r[5] contains the choice of media to add
+        since = r[6]  # r[6] contains the id of the last tweet looked at for this rule
         if since == '0':
             snc = '0'
             orgsnc = ''
@@ -193,12 +196,12 @@ def dostuff():
                 print('Text: ', post['full_text'])
                 print('--------------------------------------------')
                 if orgsnc != '':
-                    discpost(post, r[3])
+                    discpost(post, r[3], r[5])
                     saveusage(conn, r[4], post['full_text'])
         if snc != '0':
             while True:
                 try:
-                    if r[5] == '0':
+                    if r[6] == '0':
                         cur.execute("INSERT INTO since VALUES({},'{}')".format(r[4], snc))
                         conn.commit()
                     else:

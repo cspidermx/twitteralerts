@@ -49,7 +49,9 @@ def dopost(hook, txt, file):
     return resp
 
 
-def discpost(st, webhookurl):
+def discpost(st, webhookurl, media):
+    # media = {'2': 'Images and GIFs', '1i': 'Images (but NOT Videos/GIFs)', '1g': 'Videos/GIFs (but NOT Images)',
+    # '0': 'No Media'}
     msg = st['full_text']
     links = getlinks(msg)
     hashes = gethashtags(msg)
@@ -86,7 +88,8 @@ def discpost(st, webhookurl):
                         first = False
 
     for lnk in links2:
-        if str(lnk['ext']).find('mp4') != -1 or str(lnk['ext']).find('jpg') != -1 or str(lnk['ext']).find('png') != -1:
+        if str(lnk['ext']).find('mp4') != -1 or str(lnk['ext']).find('jpg') != -1 or str(lnk['ext']).find(
+                'png') != -1 or str(lnk['ext']).find('.video') != -1:
             msg = msg.replace(lnk['org'], '')
             # msg = msg.replace(lnk['org'], shorten(lnk['ext']))
         else:
@@ -103,26 +106,30 @@ def discpost(st, webhookurl):
 
     file = {}
 
-    for lnk in links2:
-        if str(lnk['ext']).find('mp4') != -1 or str(lnk['ext']).find('jpg') != -1 or str(lnk['ext']).find('png') != -1:
-            if str(lnk['ext']).find('jpg') != -1 or str(lnk['ext']).find('png') != -1 or str(lnk['ext']).find(
-                    '.video') != -1:
-                if str(lnk['ext']).find('.video') != -1:
-                    url = lnk['ext'][:-6].split("?", 1)[0]
+    if media != '0':
+        for lnk in links2:
+            if str(lnk['ext']).find('mp4') != -1 or str(lnk['ext']).find('jpg') != -1 or str(lnk['ext']).find('png') != -1:
+                if str(lnk['ext']).find('jpg') != -1 or str(lnk['ext']).find('png') != -1 or str(lnk['ext']).find(
+                        '.video') != -1:
+                    if (media == '2') or (media == '1i' and str(lnk['ext']).find('.video') == -1) or (
+                            str(lnk['ext']).find('.video') != -1 and media == '1g'):
+                        if str(lnk['ext']).find('.video') != -1:
+                            url = lnk['ext'][:-6].split("?", 1)[0]
+                        else:
+                            url = lnk['ext']
+                        http = urllib3.PoolManager()
+                        r = http.request('GET', url, preload_content=False)
+                        file_name = url.split('/')[-1]
+                        f = open(file_name, "wb")
+                        f.write(r.data)
+                        f.close()
+                        f = open(file_name, "rb")
+                        file[path_leaf(f.name)] = f
                 else:
-                    url = lnk['ext']
-                http = urllib3.PoolManager()
-                r = http.request('GET', url, preload_content=False)
-                file_name = url.split('/')[-1]
-                f = open(file_name, "wb")
-                f.write(r.data)
-                f.close()
-                f = open(file_name, "rb")
-                file[path_leaf(f.name)] = f
-            else:
-                fname = to_gif(lnk['ext'])
-                gif = open(fname, 'rb')
-                file[path_leaf(gif.name)] = gif
+                    if media == '2' or media == '1g':
+                        fname = to_gif(lnk['ext'])
+                        gif = open(fname, 'rb')
+                        file[path_leaf(gif.name)] = gif
 
     response = dopost(webhookurl, values, file)
     cleanfiles(file)
