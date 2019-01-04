@@ -111,7 +111,7 @@ def dostuff():
     while True:
         try:
             cur = conn.cursor()
-            cur.execute('SELECT id_user, handle, lookfor, discrobot, id, media FROM rules')
+            cur.execute('SELECT id_user, handle, lookfor, discrobot, id, media, evrone FROM rules')
             rules = cur.fetchall()
             if len(rules) > 0:
                 api = TwitterAPI(consumer_key,
@@ -141,10 +141,11 @@ def dostuff():
         # r[0] contains the id_user
         scnm = r[1]  # r[1] contains the twitter handle to search
         term = r[2]  # r[2] contains the list of terms to search for
-        # r[3] contains the discord webhook URL
-        # r[4] contains the rule_id
-        # r[5] contains the choice of media to add
-        since = r[6]  # r[6] contains the id of the last tweet looked at for this rule
+        whurl = r[3]  # r[3] contains the discord webhook URL
+        rid = r[4]  # r[4] contains the rule_id
+        mda = r[5]  # r[5] contains the choice of media to add
+        evr = r[6]  # r[6] contains the choice of including @everyone on the post
+        since = r[7]  # r[7] contains the id of the last tweet looked at for this rule
         if since == '0':
             snc = '0'
             orgsnc = ''
@@ -196,17 +197,17 @@ def dostuff():
                 print('Text: ', post['full_text'])
                 print('--------------------------------------------')
                 if orgsnc != '':
-                    discpost(post, r[3], r[5])
-                    saveusage(conn, r[4], post['full_text'])
+                    discpost(post, whurl, mda, evr)
+                    saveusage(conn, rid, post['full_text'])
         if snc != '0':
             while True:
                 try:
-                    if r[6] == '0':
-                        cur.execute("INSERT INTO since VALUES({},'{}')".format(r[4], snc))
+                    if since == '0':
+                        cur.execute("INSERT INTO since VALUES({},'{}')".format(rid, snc))
                         conn.commit()
                     else:
                         if snc != orgsnc:
-                            cur.execute("UPDATE since set idsince='{}' WHERE rule_id={}".format(snc, r[4]))
+                            cur.execute("UPDATE since set idsince='{}' WHERE rule_id={}".format(snc, rid))
                             conn.commit()
                     break
                 except psycopg2.OperationalError:

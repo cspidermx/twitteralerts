@@ -49,7 +49,7 @@ def dopost(hook, txt, file):
     return resp
 
 
-def discpost(st, webhookurl, media):
+def discpost(st, webhookurl, media, everyone):
     # media = {'2': 'Images and GIFs', '1i': 'Images (but NOT Videos/GIFs)', '1g': 'Videos/GIFs (but NOT Images)',
     # '0': 'No Media'}
     msg = st['full_text']
@@ -102,7 +102,11 @@ def discpost(st, webhookurl, media):
                 msg = msg.replace(lnk['org'], newlnk)
                 first = False
 
-    values = {"content": '@everyone\n\n' + msg}
+    if everyone:
+        ev = '@everyone\n\n'
+    else:
+        ev = ''
+    values = {"content": ev + msg}
 
     file = {}
 
