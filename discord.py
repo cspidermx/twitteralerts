@@ -96,7 +96,7 @@ def discpost(st, webhookurl, media, everyone):
             newlnk = lnk['ext']
             if str(lnk['ext']).find('.ly') != -1:
                 newlnk = expand(lnk['ext'])
-            if str(newlnk).find('twitch') != 0 and not first:
+            if str(newlnk).find('twitch') != 0 and not first and media != '0':
                 msg = msg.replace(lnk['org'], '<' + newlnk + '>')
             else:
                 msg = msg.replace(lnk['org'], newlnk)
