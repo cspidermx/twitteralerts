@@ -5,9 +5,11 @@ from bitly import expand  # shorten
 from cc import to_gif
 import os
 import ntpath
+import time
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+retry_429 = 0
 
 
 def getlinks(texto):
@@ -38,14 +40,23 @@ def cleanfiles(filedict):
 
 
 def dopost(hook, txt, file):
+    global retry_429
     if bool(file):
         resp = requests.post(hook, files=file, data=txt)
     else:
         resp = requests.post(hook, data=txt)
 
     if resp.status_code != 200 and resp.status_code != 204:
-        print("Error en post del texto: {} <{}>".format(resp.status_code, resp.reason))
-
+        if resp.status_code == 429 and retry_429 <= 2:
+            print("429 Header: {}", resp.headers)
+            print("429 Text: {}", resp.text)
+            print("429 JSON: {}", resp.json())
+            retry_429 += 1
+            time.sleep(30)
+            dopost(hook, txt, file)
+        else:
+            print("Error en post del texto: {} <{}>".format(resp.status_code, resp.reason))
+    retry_429 = 0
     return resp
 
 
